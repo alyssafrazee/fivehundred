@@ -1,4 +1,5 @@
-*.py[cod]
+*~
+fivehundred_scratch.py
 
 # C extensions
 *.so
