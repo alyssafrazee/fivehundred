@@ -44,6 +44,8 @@ class Game(object):
         self.score = [0, 0]
         self.trick_score = [0, 0]
         self.dealer = 4
+        self.high_bid = False
+        self.bid_winner = False
     
     def shuffle_deal(self, handsize = 10):
         import random
@@ -64,13 +66,17 @@ class Game(object):
             self.hands[p].sort()
             for c in self.hands[p]:
                 print c
-            theBid = validate_bid(raw_input("\nwhat do you bid? "), current_bid)
-            if theBid.number != 0:
-                current_bid = theBid
+            player_p_bid = False
+            while not player_p_bid:
+                bid_input = raw_input("\nWhat would you like to bid? ")
+                player_p_bid = validate_bid(self, bid_input, current_bid)
+            if player_p_bid.number != 0:
+                current_bid = player_p_bid
                 bid_winner = p
     
         self.high_bid = current_bid
         self.bid_winner = bid_winner
+    
      
     def check_winning_bid(self):
         if self.high_bid.number == 0 or self.high_bid.number == 6:
@@ -81,12 +87,13 @@ class Game(object):
                 message = "house rules: we don't play 6 bids. deal passes to player "+str(get_player(self.dealer))
             return True, message
         else: 
-            return True, None
+            return False, None
+    
     
     def pick_up_kitty(self):
         print "\n"
-        print "player ", self.bid_winner, " wins the bid with ", self.high_bid
-        print "player ", self.bid_winner, ": here is the kitty:"
+        print "player",self.bid_winner, "wins the bid with", self.high_bid
+        print "player",self.bid_winner, "- here is the kitty:"
     
         # sort hands and kitty with trump information:
         for k in self.hands.keys():
@@ -105,17 +112,20 @@ class Game(object):
         for c in self.hands['kitty']:
             print c
         print "and again, here is your hand:"
-        for c in hands[str(self.bid_winner)]:
+        for c in self.hands[str(self.bid_winner)]:
             print c
         new_hand = []
         newcard = 0
         print "\nof these 15 cards, choose the 10 you would like to keep."
         for newcard in range(10):
-            new_hand.append(validateCard("card "+str(newcard+1)+": ", self.hands[str(bid_winner)]+self.hands['kitty'], self.high_bid.suit, new_hand))
+            prompt = "card "+str(newcard+1)+": "
+            choose_from = self.hands[str(self.bid_winner)] + self.hands['kitty']
+            new_hand.append(validate_card(self, prompt, choose_from, self.high_bid.suit, new_hand))
         new_hand.sort()
         self.hands[str(self.bid_winner)] = new_hand
     
-    def play_tricks(self, lead_player):
+    def play_tricks(self):
+        lead_player = int(self.bid_winner)
         for trick in range(10):
             play_order = [str(get_player(x)) for x in range(lead_player, lead_player+4)]
             cards_played = []
@@ -125,10 +135,10 @@ class Game(object):
                     print c
                 valid_move = False
                 while not valid_move:
-                    selected_card = validate_card("Which card would you like to play? ", hands[p], high_bid.suit, None)
+                    selected_card = validate_card(self, "Which card would you like to play? ", self.hands[p], self.high_bid.suit, False)
                     valid_move = validate_move(selected_card, self.high_bid.suit, p, self.hands, cards_played)
                 cards_played.append(selected_card)
-                hands[p].remove(selected_card)
+                self.hands[p].remove(selected_card)
 
             contenders = [x for x in cards_played if x.suit==cards_played[0].suit or x.trump]
             winning_card = max(contenders)
@@ -138,9 +148,9 @@ class Game(object):
             
             # increment hand scores:
             if winning_player==1 or winning_player==3:
-                self..trick_score[0] += 1
+                self.trick_score[0] += 1
             else:
-                self.tricks_score[1] += 1
+                self.trick_score[1] += 1
             
             # pass lead to winning player
             lead_player = winning_player
@@ -173,7 +183,7 @@ class Game(object):
     def print_score(self):
         print "Players 1 and 3 have",self.score[0],"points"
         print "Players 2 and 4 have",self.score[1],"points"
-        if self.high_bid:
+        if self.bid_winner:
             print "Player",self.bid_winner,"has won the bid, with",self.high_bid
         else:
             print "The bid has not yet been won."
@@ -285,31 +295,27 @@ def get_player(x):
     return x
 
 #### the validators
-
-# helper function for bidding: checking whether a bid is valid
-def validate_bid(game, theBid, currentBid):
-    if theBid == 'score':
+def validate_bid(game, bid_input, current_bid):
+    if bid_input == 'score':
         game.print_score()
-        theBid = raw_input("\nwhat would you like to bid? ")
-        return validate_bid(game, theBid, currentBid)
+        return False
 
-    if theBid == 'pass':
-        return Bid(number=0, suit='spades')
+    if bid_input == 'pass':
+        return Bid(0, 'spades')
     
     else:
-        theBid = theBid.split(' ')
+        bid_input = bid_input.split(' ')
         
-        if len(theBid) != 2 or theBid[0] not in ['6','7','8','9','10'] or theBid[1] not in ['spades','hearts','diamonds','clubs','notrump']:
-            theBid = raw_input('invalid bid, please try again: ')
-            return validate_bid(theBid, currentBid)
-        
+        if len(bid_input) != 2 or bid_input[0] not in ['6','7','8','9','10'] or bid_input[1] not in ['spades','hearts','diamonds','clubs','notrump']:
+            print "invalid bid!"
+            return False
         else:
-            theBid = Bid(number=int(theBid[0]), suit=theBid[1])
-            if theBid <= currentBid:
-                theBid = raw_input("you must bid higher than the current bid ("+str(currentBid)+"): ")
-                return validate_bid(theBid, currentBid)
+            bid_input = Bid(number=int(bid_input[0]), suit=bid_input[1])
+            if bid_input <= current_bid:
+                print "you must bid higher than the current bid ("+str(current_bid)+")"
+                return False
             else:
-                return theBid
+                return bid_input
 
 # helper function for choosing and playing cards:
 def validate_card(game, message, hand, trump, new_hand):
@@ -399,22 +405,26 @@ def play500():
         print "player",get_player(game.dealer),"is dealing."
         
         # have players bid:
-        game.get_high_bid():
+        print "bidding"
+        game.get_high_bid()
         
         # check whether bid is high enough:
+        print "checking bids"
         bid_failed, message = game.check_winning_bid()
         if bid_failed:
             print message
+            game.high_bid = False
+            game.bid_winner = False
             continue
         
         # have bid winner pick up the kitty:
-        game.pick_up_kitty(bid_winner)
+        game.pick_up_kitty()
         
         # play tricks
-        game.play_tricks(lead_player = bid_winner)
+        game.play_tricks()
         
         # calculate the score:
-        game.score_hand(bid_winner):
+        game.score_hand(bid_winner)
         
         # reset trump and bids:
         game.reset_trump()
