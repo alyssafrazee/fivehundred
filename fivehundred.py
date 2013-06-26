@@ -325,14 +325,13 @@ def validate_card(game, message, hand, trump, new_hand):
         game.print_score()
         message = "choose card: "
         theCard = validate_card(game, message, hand, trump, new_hand)
-    
-    card_values = ['4','5','6','7','8','9','10','J','Q','K','A']
-    card_suits = ['spades','hearts','diamonds','clubs']
-    
-    if card == "joker":
+        
+    elif card == "joker":
         theCard = Card(suit=trump, number="joker", trump=True)
     
     else:
+        card_values = ['4','5','6','7','8','9','10','J','Q','K','A']
+        card_suits = ['spades','hearts','diamonds','clubs']
         card_val_and_suit = card.split(' ')
         
         if len(card_val_and_suit) != 2 or card_val_and_suit[0] not in card_values or card_val_and_suit[1] not in card_suits:
@@ -424,7 +423,7 @@ def play500():
         game.play_tricks()
         
         # calculate the score:
-        game.score_hand(bid_winner)
+        game.score_hand()
         
         # reset trump and bids:
         game.reset_trump()
