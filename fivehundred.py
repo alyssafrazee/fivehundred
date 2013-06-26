@@ -164,7 +164,7 @@ class Game(object):
                 c.suit = 'none'
     
     def score_hand(self):
-        if self.bid_winner == 1 or self.bid_winner == 3:
+        if self.bid_winner == "1" or self.bid_winner == "3":
             if self.trick_score[0] >= self.high_bid.number:
                 print "players 1 and 3 have made their bid!"
                 self.score[0] += self.score_table[self.high_bid]
