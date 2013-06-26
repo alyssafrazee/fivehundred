@@ -418,8 +418,6 @@ def play500():
     print "Welcome to python 500!\n\n"
     game = Game()
     
-    print __name__
-    
     while all(-500 < s < 500 for s in game.score):
         # shuffle and deal:
         game.shuffle_deal()
