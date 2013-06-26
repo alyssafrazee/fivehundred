@@ -89,11 +89,10 @@ class Game(object):
         else: 
             return False, None
     
-    
     def pick_up_kitty(self):
         print "\n"
         print "player",self.bid_winner, "wins the bid with", self.high_bid
-        print "player",self.bid_winner, "- here is the kitty:"
+        print "\nplayer",self.bid_winner, "- here is the kitty: \n"
     
         # sort hands and kitty with trump information:
         for k in self.hands.keys():
@@ -111,12 +110,12 @@ class Game(object):
     
         for c in self.hands['kitty']:
             print c
-        print "and again, here is your hand:"
+        print "\nand again, here is your hand:"
         for c in self.hands[str(self.bid_winner)]:
             print c
         new_hand = []
         newcard = 0
-        print "\nof these 15 cards, choose the 10 you would like to keep."
+        print "\nof these 15 cards, choose the 10 you would like to keep. \n"
         for newcard in range(10):
             prompt = "card "+str(newcard+1)+": "
             choose_from = self.hands[str(self.bid_winner)] + self.hands['kitty']
@@ -196,7 +195,17 @@ class Game(object):
             print "Players 2 and 4 have taken",self.trick_score[1],"tricks"
     
     def print_trick(self):
-        print "trick printing not yet implemented, but we can access it!"
+        if self.cards_played == []:
+            print "\nno cards have been played on this trick yet"
+        elif len(self.cards_played)==1:
+            print "\n",self.cards_played[0], "was led.  It's your turn.  Your partner has not yet played."
+        elif len(self.cards_played)==2:
+            print "\nYour partner led",self.cards_played[0]
+            print "Opposing team played", self.cards_played[1]
+        else:
+            print "\nOpposing team led",self.cards_played[0]
+            print "Your partner played",self.cards_played[1]
+            print "Opposing team played",self.cards_played[2]
     
     def end_game_message(self):
         if self.score[0] >= 500:
@@ -409,11 +418,9 @@ def play500():
         print "player",get_player(game.dealer),"is dealing."
         
         # have players bid:
-        print "bidding"
         game.get_high_bid()
         
         # check whether bid is high enough:
-        print "checking bids"
         bid_failed, message = game.check_winning_bid()
         if bid_failed:
             print message
