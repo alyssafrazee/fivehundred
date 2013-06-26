@@ -92,7 +92,7 @@ class Game(object):
             player_p_bid = False
             while not player_p_bid:
                 bid_input = raw_input("\nWhat would you like to bid? ")
-                player_p_bid = validate_bid(self, bid_input, current_bid)
+                player_p_bid = self.validate_bid(bid_input, current_bid)
             if player_p_bid.number != 0:
                 current_bid = player_p_bid
                 bid_winner = p
@@ -113,11 +113,13 @@ class Game(object):
 
     def validate_card(self, card, p, choosing_kitty, new_hand):
        
+        trump = self.high_bid.suit
+                    
         if card == "score" or card == "trick":
             if card == "score":
-                game.print_score()
+                self.print_score()
             else:
-                game.print_trick()
+                self.print_trick()
             return False
         
         elif card == "joker":
@@ -138,7 +140,7 @@ class Game(object):
                 except ValueError: # face card
                     pass
                 chosen_card = Card(suit=card_suit, number=card_value, trump = (card_suit==trump) )
-                if theCard == get_low_bower(trump):
+                if chosen_card == get_low_bower(trump):
                     chosen_card.trump = True
                     chosen_card.lowBower = True
         
@@ -160,11 +162,10 @@ class Game(object):
         
         else:
             # if you get to this point, you're playing a trick and have the card.
-            if self.cards_played == []
+            if self.cards_played == []:
                 return chosen_card
             
             else:
-                trump = self.high_bid.suit
                 if self.cards_played[0] == get_low_bower(trump):
                     led_suit = trump
                 else:
@@ -174,21 +175,21 @@ class Game(object):
                 if get_low_bower(trump) in self.hands[p]:
                     suits_in_hand.add(trump)
 
-                if selected_card.suit != led_suit:
-                    if selected_card == get_low_bower(trump) and led_suit == trump:
-                        return selected_card
+                if chosen_card.suit != led_suit:
+                    if chosen_card == get_low_bower(trump) and led_suit == trump:
+                        return chosen_card
                     else:
                         if led_suit in suits_in_hand:
                             print "Follow suit!"
                             return False
                         else:
-                            return selected_card
+                            return chosen_card
                 else:
-                    if selected_card == get_low_bower(trump) and led_suit in suits_in_hand:
+                    if chosen_card == get_low_bower(trump) and led_suit in suits_in_hand:
                         print "Follow suit! (low bower is a trump card)"
                         return False
                     else:
-                        return selected_card
+                        return chosen_card
     
     def pick_up_kitty(self):
         print "\n"
@@ -219,9 +220,9 @@ class Game(object):
         print "\nof these 15 cards, choose the 10 you would like to keep. \n"
         for newcard in range(10):
             prompt = "card "+str(newcard+1)+": "
-            choose_from = self.hands[str(self.bid_winner)] + self.hands['kitty']
+            selected_card = False
             while not selected_card:
-                card_input = rqw_input(prompt)
+                card_input = raw_input(prompt)
                 selected_card = self.validate_card(card_input, str(self.bid_winner), True, new_hand)
             new_hand.append(selected_card)
         new_hand.sort()
