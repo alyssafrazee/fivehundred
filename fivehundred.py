@@ -56,6 +56,28 @@ class Game(object):
         for i, hand in enumerate(hand_names):
             self.hands[hand] = self.deck[i*handsize:(i+1)*handsize]
     
+    def validate_bid(self, bid_input, current_bid):
+        if bid_input == 'score':
+            self.print_score()
+            return False
+
+        if bid_input == 'pass':
+            return Bid(0, 'spades')
+    
+        else:
+            bid_input = bid_input.split(' ')
+        
+            if len(bid_input) != 2 or bid_input[0] not in ['6','7','8','9','10'] or bid_input[1] not in ['spades','hearts','diamonds','clubs','notrump']:
+                print "invalid bid!"
+                return False
+            else:
+                bid_input = Bid(number=int(bid_input[0]), suit=bid_input[1])
+                if bid_input <= current_bid:
+                    print "you must bid higher than the current bid ("+str(current_bid)+")"
+                    return False
+                else:
+                    return bid_input
+    
     def get_high_bid(self):
         first_bidder = self.dealer+1
         players = [str(get_player(x)) for x in range(first_bidder, first_bidder+4)]
@@ -88,6 +110,85 @@ class Game(object):
             return True, message
         else: 
             return False, None
+
+    def validate_card(self, card, p, choosing_kitty, new_hand):
+       
+        if card == "score" or card == "trick":
+            if card == "score":
+                game.print_score()
+            else:
+                game.print_trick()
+            return False
+        
+        elif card == "joker":
+            chosen_card = Card(suit=trump, number="joker", trump=True)
+        
+        else:
+            card_values = ['4','5','6','7','8','9','10','J','Q','K','A']
+            card_suits = ['spades','hearts','diamonds','clubs']
+            card_val_and_suit = card.split(' ')
+
+            if len(card_val_and_suit) != 2 or card_val_and_suit[0] not in card_values or card_val_and_suit[1] not in card_suits:
+                print "invalid card - try again: "
+                return False
+            else:
+                card_value, card_suit = card_val_and_suit
+                try:
+                    card_value = int(card_value)
+                except ValueError: # face card
+                    pass
+                chosen_card = Card(suit=card_suit, number=card_value, trump = (card_suit==trump) )
+                if theCard == get_low_bower(trump):
+                    chosen_card.trump = True
+                    chosen_card.lowBower = True
+        
+        if chosen_card not in self.hands[p]:
+            if not choosing_kitty:
+                print "you don't have this card."
+                return False
+            else:
+                if chosen_card not in self.hands['kitty']:
+                    print "you don't have this card."
+                    return False
+        
+        if choosing_kitty and chosen_card in new_hand:
+            print "you have already chosen this card, please choose a different one: "
+            return False
+        
+        if choosing_kitty:
+            return chosen_card
+        
+        else:
+            # if you get to this point, you're playing a trick and have the card.
+            if self.cards_played == []
+                return chosen_card
+            
+            else:
+                trump = self.high_bid.suit
+                if self.cards_played[0] == get_low_bower(trump):
+                    led_suit = trump
+                else:
+                    led_suit = self.cards_played[0].suit
+    
+                suits_in_hand = {c.suit for c in self.hands[p] if c != get_low_bower(trump)}
+                if get_low_bower(trump) in self.hands[p]:
+                    suits_in_hand.add(trump)
+
+                if selected_card.suit != led_suit:
+                    if selected_card == get_low_bower(trump) and led_suit == trump:
+                        return selected_card
+                    else:
+                        if led_suit in suits_in_hand:
+                            print "Follow suit!"
+                            return False
+                        else:
+                            return selected_card
+                else:
+                    if selected_card == get_low_bower(trump) and led_suit in suits_in_hand:
+                        print "Follow suit! (low bower is a trump card)"
+                        return False
+                    else:
+                        return selected_card
     
     def pick_up_kitty(self):
         print "\n"
@@ -119,7 +220,10 @@ class Game(object):
         for newcard in range(10):
             prompt = "card "+str(newcard+1)+": "
             choose_from = self.hands[str(self.bid_winner)] + self.hands['kitty']
-            new_hand.append(validate_card(self, prompt, choose_from, self.high_bid.suit, new_hand))
+            while not selected_card:
+                card_input = rqw_input(prompt)
+                selected_card = self.validate_card(card_input, str(self.bid_winner), True, new_hand)
+            new_hand.append(selected_card)
         new_hand.sort()
         self.hands[str(self.bid_winner)] = new_hand
     
@@ -131,10 +235,11 @@ class Game(object):
                 print "\nplayer "+p+": it's your turn. Here is your hand: "
                 for c in self.hands[p]:
                     print c
+                selected_card = False
                 valid_move = False
-                while not valid_move:
-                    selected_card = validate_card(self, "\nWhich card would you like to play? ", self.hands[p], self.high_bid.suit, False)
-                    valid_move = validate_move(selected_card, self.high_bid.suit, p, self.hands, self.cards_played)
+                while not selected_card:
+                    card_input = raw_input("\nWhich card would you like to play? ")
+                    selected_card = self.validate_card(card_input, p, False, None)
                 self.cards_played.append(selected_card)
                 self.hands[p].remove(selected_card)
 
@@ -220,8 +325,7 @@ class Game(object):
             print "players 1 and 3 win, because players 2 and 4 lose!"
         print "thank you for playing!"    
 
-
-#### the card and bid classes:
+# the card and bid classes:
 class Card(object):
     def __init__(self, suit, number, trump=False, lowBower=False):
         self.suit = suit
@@ -301,118 +405,20 @@ class Bid(object):
     def __hash__(self):
         return hash(str(self))
 
+
 # tiny helper player ID function
 def get_player(x):
     while x > 4:
         x -= 4
     return x
-
-#### the validators
-def validate_bid(game, bid_input, current_bid):
-    if bid_input == 'score':
-        game.print_score()
-        return False
-
-    if bid_input == 'pass':
-        return Bid(0, 'spades')
     
-    else:
-        bid_input = bid_input.split(' ')
-        
-        if len(bid_input) != 2 or bid_input[0] not in ['6','7','8','9','10'] or bid_input[1] not in ['spades','hearts','diamonds','clubs','notrump']:
-            print "invalid bid!"
-            return False
-        else:
-            bid_input = Bid(number=int(bid_input[0]), suit=bid_input[1])
-            if bid_input <= current_bid:
-                print "you must bid higher than the current bid ("+str(current_bid)+")"
-                return False
-            else:
-                return bid_input
-
-# helper function for choosing and playing cards:
-def validate_card(game, message, hand, trump, new_hand):
-    card = raw_input(message)
-    
-    if card == "score" or card == "trick":
-        if card == "score":
-            game.print_score()
-        else:
-            game.print_trick()
-        message = "choose your card: "
-        theCard = validate_card(game, message, hand, trump, new_hand)
-        
-    elif card == "joker":
-        theCard = Card(suit=trump, number="joker", trump=True)
-    
-    else:
-        card_values = ['4','5','6','7','8','9','10','J','Q','K','A']
-        card_suits = ['spades','hearts','diamonds','clubs']
-        card_val_and_suit = card.split(' ')
-        
-        if len(card_val_and_suit) != 2 or card_val_and_suit[0] not in card_values or card_val_and_suit[1] not in card_suits:
-            message = "invalid card - try again: "
-            theCard = validate_card(game, message, hand, trump, new_hand)
-        else:
-            card_value, card_suit = card_val_and_suit
-            try:
-                card_value = int(card_value)
-            except ValueError: # face card
-                pass
-            theCard = Card(suit=card_suit, number=card_value, trump = (card_suit==trump) )
-            if theCard == get_low_bower(trump):
-                theCard.trump = True
-                theCard.lowBower = True
-        
-    if theCard not in hand:
-        message = "you don't have this card, please enter another card: "
-        theCard = validate_card(game, message, hand, trump, new_hand)
-        
-    if new_hand:
-        if theCard in new_hand:
-            message = "you have already chosen this card, please choose a different one: "
-            theCard = validate_card(game, message, hand, trump, new_hand)
-        
-    return theCard
-
-# function to check whether you can actually play a card from your hand
-def validate_move(selectedCard, trump, p, hands, cardsPlayed):
-    # selectedCard must already be validated for hands[p]
-    
-    if cardsPlayed == []:
-       return True
-
-    else:
-        if cardsPlayed[0] == get_low_bower(trump):
-            ledSuit = trump
-        else:
-            ledSuit = cardsPlayed[0].suit
-
-        suitsInHand = {c.suit for c in hands[p] if c != get_low_bower(trump)}
-        if get_low_bower(trump) in hands[p]:
-            suitsInHand.add(trump)
-
-        if selectedCard.suit != ledSuit:
-            if selectedCard == get_low_bower(trump) and ledSuit == trump:
-               return True
-            else:
-                if ledSuit in suitsInHand:
-                    print "Follow suit!"
-                    return False
-                else:
-                    return True
-        else:
-            if selectedCard == get_low_bower(trump) and ledSuit in suitsInHand:
-                print "Follow suit! (low bower is a trump card)"
-                return False
-            else:
-                return True
-
 
 #### FUNCTION TO PLAY GAME!
 def play500():
     print "Welcome to python 500!\n\n"
     game = Game()
+    
+    print __name__
     
     while all(-500 < s < 500 for s in game.score):
         # shuffle and deal:
