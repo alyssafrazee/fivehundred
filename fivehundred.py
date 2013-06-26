@@ -339,7 +339,7 @@ def validate_card(game, message, hand, trump, new_hand):
             game.print_score()
         else:
             game.print_trick()
-        message = "choose card: "
+        message = "choose your card: "
         theCard = validate_card(game, message, hand, trump, new_hand)
         
     elif card == "joker":
