@@ -46,6 +46,7 @@ class Game(object):
         self.dealer = 4
         self.high_bid = False
         self.bid_winner = False
+        self.cards_played = []
     
     def shuffle_deal(self, handsize = 10):
         import random
@@ -77,7 +78,6 @@ class Game(object):
         self.high_bid = current_bid
         self.bid_winner = bid_winner
     
-     
     def check_winning_bid(self):
         if self.high_bid.number == 0 or self.high_bid.number == 6:
             self.dealer += 1
@@ -128,29 +128,30 @@ class Game(object):
         lead_player = int(self.bid_winner)
         for trick in range(10):
             play_order = [str(get_player(x)) for x in range(lead_player, lead_player+4)]
-            cards_played = []
             for p in play_order:
-                print "player "+p+": it's your turn. Here is your hand: "
+                print "\nplayer "+p+": it's your turn. Here is your hand: "
                 for c in self.hands[p]:
                     print c
                 valid_move = False
                 while not valid_move:
-                    selected_card = validate_card(self, "Which card would you like to play? ", self.hands[p], self.high_bid.suit, False)
-                    valid_move = validate_move(selected_card, self.high_bid.suit, p, self.hands, cards_played)
-                cards_played.append(selected_card)
+                    selected_card = validate_card(self, "\nWhich card would you like to play? ", self.hands[p], self.high_bid.suit, False)
+                    valid_move = validate_move(selected_card, self.high_bid.suit, p, self.hands, self.cards_played)
+                self.cards_played.append(selected_card)
                 self.hands[p].remove(selected_card)
 
-            contenders = [x for x in cards_played if x.suit==cards_played[0].suit or x.trump]
+            contenders = [x for x in self.cards_played if x.suit==self.cards_played[0].suit or x.trump]
             winning_card = max(contenders)
-            winning_player = int(play_order[cards_played.index(winning_card)])
-            print "player", winning_player, "wins with", winning_card
-            print "\n"
+            winning_player = int(play_order[self.cards_played.index(winning_card)])
+            print "\nplayer", winning_player, "wins with", winning_card,"\n"
             
             # increment hand scores:
             if winning_player==1 or winning_player==3:
                 self.trick_score[0] += 1
             else:
                 self.trick_score[1] += 1
+            
+            # clear the table:
+            self.cards_played = []
             
             # pass lead to winning player
             lead_player = winning_player
@@ -289,6 +290,7 @@ class Bid(object):
     def __hash__(self):
         return hash(str(self))
 
+# tiny helper player ID function
 def get_player(x):
     while x > 4:
         x -= 4
@@ -321,8 +323,11 @@ def validate_bid(game, bid_input, current_bid):
 def validate_card(game, message, hand, trump, new_hand):
     card = raw_input(message)
     
-    if card == "score":
-        game.print_score()
+    if card == "score" or card == "trick":
+        if card == "score":
+            game.print_score()
+        else:
+            game.print_trick()
         message = "choose card: "
         theCard = validate_card(game, message, hand, trump, new_hand)
         
@@ -446,5 +451,4 @@ if __name__ == '__main__':
     
     
     
-
 
