@@ -171,6 +171,7 @@ class Game(object):
             else:
                 print "players 1 and 3 have been set."
                 self.score[0] -= self.score_table[self.high_bid]
+            self.score[1] += 10*self.trick_score[1]
         else:
             if self.trick_score[1] >= self.high_bid.number:
                 print "players 2 and 4 have made their bid!"
@@ -178,6 +179,7 @@ class Game(object):
             else:
                 print "players 2 and 4 have been set."
                 self.score[1] -= self.score_table[self.high_bid]
+            self.score[0] += 10*self.trick_score[0]
         self.trick_score = [0, 0]
     
     def print_score(self):
